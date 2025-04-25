@@ -26,10 +26,10 @@ class Method_MLP(method, nn.Module):
         method.__init__(self, mName, mDescription)
         nn.Module.__init__(self)
         # check here for nn.Linear doc: https://pytorch.org/docs/stable/generated/torch.nn.Linear.html
-        self.fc_layer_1 = nn.Linear(784, 128)
+        self.fc_layer_1 = nn.Linear(784, 256)
         # check here for nn.ReLU doc: https://pytorch.org/docs/stable/generated/torch.nn.ReLU.html
         self.activation_func_1 = nn.ReLU()
-        self.fc_layer_2 = nn.Linear(128, 10)
+        self.fc_layer_2 = nn.Linear(256, 10)
         # check here for nn.Softmax doc: https://pytorch.org/docs/stable/generated/torch.nn.Softmax.html
         self.activation_func_2 = nn.Softmax(dim=1)
         # Move model to GPU if available
@@ -87,7 +87,10 @@ class Method_MLP(method, nn.Module):
             optimizer.step()
 
             if epoch%10 == 0:
-                accuracy_evaluator.data = {'true_y': y_true, 'pred_y': y_pred.max(1)[1]}
+                accuracy_evaluator.data = {
+                    'true_y': y_true.cpu(),
+                    'pred_y': y_pred.max(1)[1].cpu()
+                }
                 print('Epoch:', epoch, 'Accuracy:', accuracy_evaluator.evaluate(), 'Loss:', train_loss.item())
     
     def test(self, X):
@@ -95,7 +98,7 @@ class Method_MLP(method, nn.Module):
         y_pred = self.forward(torch.FloatTensor(np.array(X)).to(self.device))
         # convert the probability distributions to the corresponding labels
         # instances will get the labels corresponding to the largest probability
-        return y_pred.max(1)[1]
+        return y_pred.max(1)[1].cpu()
     
     def run(self):
         print('method running...')
