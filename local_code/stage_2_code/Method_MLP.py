@@ -26,13 +26,28 @@ class Method_MLP(method, nn.Module):
     def __init__(self, mName, mDescription):
         method.__init__(self, mName, mDescription)
         nn.Module.__init__(self)
-        # check here for nn.Linear doc: https://pytorch.org/docs/stable/generated/torch.nn.Linear.html
+        # First layer
         self.fc_layer_1 = nn.Linear(784, 256)
-        # check here for nn.ReLU doc: https://pytorch.org/docs/stable/generated/torch.nn.ReLU.html
         self.activation_func_1 = nn.ReLU()
-        self.fc_layer_2 = nn.Linear(256, 10)
-        # check here for nn.Softmax doc: https://pytorch.org/docs/stable/generated/torch.nn.Softmax.html
-        self.activation_func_2 = nn.Softmax(dim=1)
+        self.batch_norm_1 = nn.BatchNorm1d(256)
+        self.dropout_1 = nn.Dropout(p=0.2)
+
+        # Second layer
+        self.fc_layer_2 = nn.Linear(256, 128)
+        self.activation_func_2 = nn.ReLU()
+        self.batch_norm_2 = nn.BatchNorm1d(128)
+        self.dropout_2 = nn.Dropout(p=0.2)
+
+        # Third layer
+        self.fc_layer_3 = nn.Linear(128, 64)
+        self.activation_func_3 = nn.ReLU()
+        self.batch_norm_3 = nn.BatchNorm1d(64)
+        self.dropout_3 = nn.Dropout(p=0.2)
+
+        # Output layer
+        self.fc_layer_4 = nn.Linear(64, 10)
+        self.activation_func_4 = nn.Softmax(dim=1)
+
         # Move model to GPU if available
         print(f'CUDA available: {torch.cuda.is_available()}')
         if torch.cuda.is_available():
@@ -45,16 +60,31 @@ class Method_MLP(method, nn.Module):
     # it defines the forward propagation function for input x
     # this function will calculate the output layer by layer
 
-    def forward(self, x):
+    def forward(self, input_features):
         '''Forward propagation'''
-        # hidden layer embeddings
-        h = self.activation_func_1(self.fc_layer_1(x))
-        # outout layer result
-        # self.fc_layer_2(h) will be a nx2 tensor
-        # n (denotes the input instance number): 0th dimension; 2 (denotes the class number): 1st dimension
-        # we do softmax along dim=1 to get the normalized classification probability distributions for each instance
-        y_pred = self.activation_func_2(self.fc_layer_2(h))
-        return y_pred
+        # First hidden layer
+        hidden1 = self.fc_layer_1(input_features)
+        hidden1_norm = self.batch_norm_1(hidden1)
+        hidden1_activated = self.activation_func_1(hidden1_norm)
+        hidden1_regularized = self.dropout_1(hidden1_activated)
+
+        # Second hidden layer
+        hidden2 = self.fc_layer_2(hidden1_regularized)
+        hidden2_norm = self.batch_norm_2(hidden2)
+        hidden2_activated = self.activation_func_2(hidden2_norm)
+        hidden2_regularized = self.dropout_2(hidden2_activated)
+
+        # Third hidden layer
+        hidden3 = self.fc_layer_3(hidden2_regularized)
+        hidden3_norm = self.batch_norm_3(hidden3)
+        hidden3_activated = self.activation_func_3(hidden3_norm)
+        hidden3_regularized = self.dropout_3(hidden3_activated)
+
+        # Output layer
+        logits = self.fc_layer_4(hidden3_regularized)
+        probabilities = self.activation_func_4(logits)
+
+        return probabilities
 
     # backward error propagation will be implemented by pytorch automatically
     # so we don't need to define the error backpropagation function here
