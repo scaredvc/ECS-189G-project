@@ -9,15 +9,21 @@ import torch
 
 data_path = './data/stage_2_data/'
 
-training_data = Dataset_Loader('stage2data_train', '')
+training_data = Dataset_Loader('stage 2 data train', '')
 training_data.dataset_source_folder_path = data_path
 training_data.dataset_source_file_name = 'train.csv'
-training_data = training_data.load()
 
-test_data = Dataset_Loader('stage2data_test', '')
+test_data = Dataset_Loader('stage 2 data test', '')
 test_data.dataset_source_folder_path = data_path
 test_data.dataset_source_file_name = 'test.csv'
-test_data = test_data.load()
 
-print(training_data)
-print(test_data)
+model_obj = Method_MLP("stage 2 method", "")
+
+result_obj = Result_Saver('saver', '')
+result_obj.result_destination_folder_path = './result/stage_2_result/MLP_'
+result_obj.result_destination_file_name = 'prediction_result'
+
+setting_obj = Setting_KFold_CV('stage 2 k fold cross validation', '')
+
+evaluate_obj = Evaluate_Accuracy('accuracy', '')
+
