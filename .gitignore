@@ -175,4 +175,4 @@ cython_debug/
 .qodo
 
 # data files
-ECS189G_Winter_2025_Source_Code_Template/ECS189G_Winter_2025_Source_Code_Template/data/
+data
