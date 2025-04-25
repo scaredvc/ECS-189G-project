@@ -18,7 +18,7 @@ class Method_MLP(method, nn.Module):
     # it defines the max rounds to train the model
     max_epoch = 500
     # it defines the learning rate for gradient descent based optimizer for model learning
-    learning_rate = 1e-3
+    learning_rate = 1e-2
 
     # it defines the the MLP model architecture, e.g.,
     # how many layers, size of variables in each layer, activation function, etc.
@@ -45,8 +45,7 @@ class Method_MLP(method, nn.Module):
         self.dropout_3 = nn.Dropout(p=0.2)
 
         # Output layer
-        self.fc_layer_4 = nn.Linear(64, 10)
-        self.activation_func_4 = nn.Softmax(dim=1)
+        self.fc_output_layer = nn.Linear(64, 10)
 
         # Move model to GPU if available
         print(f'CUDA available: {torch.cuda.is_available()}')
@@ -81,10 +80,9 @@ class Method_MLP(method, nn.Module):
         hidden3_regularized = self.dropout_3(hidden3_activated)
 
         # Output layer
-        logits = self.fc_layer_4(hidden3_regularized)
-        probabilities = self.activation_func_4(logits)
+        logits = self.fc_output_layer(hidden3_regularized)
 
-        return probabilities
+        return logits
 
     # backward error propagation will be implemented by pytorch automatically
     # so we don't need to define the error backpropagation function here
