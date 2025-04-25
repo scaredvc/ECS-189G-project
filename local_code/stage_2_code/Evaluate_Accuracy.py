@@ -22,10 +22,10 @@ class Evaluate_Accuracy(evaluate):
             case "accuracy_score":
                 return accuracy_score(self.data['true_y'], self.data['pred_y'])
             case "f1_score":
-                return f1_score(self.data['true_y'], self.data['pred_y'])
+                return f1_score(self.data['true_y'], self.data['pred_y'], average='weighted')
             case "precision_score":
-                return precision_score(self.data['true_y'], self.data['pred_y'])
+                return precision_score(self.data['true_y'], self.data['pred_y'], average='weighted')
             case "recall_score":
-                return recall_score(self.data['true_y'], self.data['pred_y'])
+                return recall_score(self.data['true_y'], self.data['pred_y'], average='weighted')
             case _:
                 raise ValueError("Unknown evaluation metric")
