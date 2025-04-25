@@ -6,13 +6,26 @@ Concrete Evaluate class for a specific evaluation metrics
 # License: TBD
 
 from local_code.base_class.evaluate import evaluate
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 
 
 class Evaluate_Accuracy(evaluate):
     data = None
     
+    def __init__(self, evaluation_metric = "accuracy_score"):
+        super().__init__()
+
+        self.evaluate_name = evaluation_metric
     def evaluate(self):
         print('evaluating performance...')
-        return accuracy_score(self.data['true_y'], self.data['pred_y'])
-        
+        match self.evaluate_name:
+            case "accuracy_score":
+                return accuracy_score(self.data['true_y'], self.data['pred_y'])
+            case "f1_score":
+                return f1_score(self.data['true_y'], self.data['pred_y'])
+            case "precision_score":
+                return precision_score(self.data['true_y'], self.data['pred_y'])
+            case "recall_score":
+                return recall_score(self.data['true_y'], self.data['pred_y'])
+            case _:
+                raise ValueError("Unknown evaluation metric")

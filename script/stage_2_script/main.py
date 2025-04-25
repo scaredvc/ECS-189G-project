@@ -25,5 +25,5 @@ result_obj.result_destination_file_name = 'prediction_result'
 
 setting_obj = Setting_KFold_CV('stage 2 k fold cross validation', '')
 
-evaluate_obj = Evaluate_Accuracy('accuracy', '')
+evaluate_obj = Evaluate_Accuracy('accuracy', '', evaluation_metric="accuracy_score")
 
