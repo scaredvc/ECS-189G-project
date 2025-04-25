@@ -32,6 +32,14 @@ class Method_MLP(method, nn.Module):
         self.fc_layer_2 = nn.Linear(128, 10)
         # check here for nn.Softmax doc: https://pytorch.org/docs/stable/generated/torch.nn.Softmax.html
         self.activation_func_2 = nn.Softmax(dim=1)
+        # Move model to GPU if available
+        print(f'CUDA available: {torch.cuda.is_available()}')
+        if torch.cuda.is_available():
+            print(f'CUDA device count: {torch.cuda.device_count()}')
+            print(f'CUDA device name: {torch.cuda.get_device_name(0)}')
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.to(self.device)
+        print(f'Using device: {self.device}')
 
     # it defines the forward propagation function for input x
     # this function will calculate the output layer by layer
@@ -63,9 +71,9 @@ class Method_MLP(method, nn.Module):
         # you can try to split X and y into smaller-sized batches by yourself
         for epoch in range(self.max_epoch): # you can do an early stop if self.max_epoch is too much...
             # get the output, we need to covert X into torch.tensor so pytorch algorithm can operate on it
-            y_pred = self.forward(torch.FloatTensor(np.array(X)))
+            y_pred = self.forward(torch.FloatTensor(np.array(X)).to(self.device))
             # convert y to torch.tensor as well
-            y_true = torch.LongTensor(np.array(y))
+            y_true = torch.LongTensor(np.array(y)).to(self.device)
             # calculate the training loss
             train_loss = loss_function(y_pred, y_true)
 
@@ -84,7 +92,7 @@ class Method_MLP(method, nn.Module):
     
     def test(self, X):
         # do the testing, and result the result
-        y_pred = self.forward(torch.FloatTensor(np.array(X)))
+        y_pred = self.forward(torch.FloatTensor(np.array(X)).to(self.device))
         # convert the probability distributions to the corresponding labels
         # instances will get the labels corresponding to the largest probability
         return y_pred.max(1)[1]
