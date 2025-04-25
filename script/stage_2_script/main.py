@@ -25,5 +25,15 @@ result_obj.result_destination_file_name = 'prediction_result'
 
 setting_obj = Setting_KFold_CV('stage 2 k fold cross validation', '')
 
-evaluate_obj = Evaluate_Accuracy('accuracy', '', evaluation_metric="accuracy_score")
+evaluate_obj = Evaluate_Accuracy('accuracy', 'accuracy_score', evaluation_metric="accuracy_score")
 
+# ---- running section ---------------------------------
+print('************ Start ************')
+setting_obj.prepare(training_data, model_obj, result_obj, evaluate_obj)
+setting_obj.print_setup_summary()
+mean_score, std_score = setting_obj.load_run_save_evaluate()
+print('************ Overall Performance ************')
+print('MLP Accuracy: ' + str(mean_score) + ' +/- ' + str(std_score))
+print('************ Finish ************')
+# ------------------------------------------------------
+    
