@@ -24,7 +24,7 @@ class Dataset_Loader(dataset):
         for line in f:
             line = line.strip('\n')
             elements = [int(i) for i in line.split(',')]
-            X.append(elements[:-1])
-            y.append(elements[-1])
+            X.append(elements[1:])
+            y.append(elements[0])
         f.close()
         return {'X': X, 'y': y}
