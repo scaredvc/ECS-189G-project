@@ -12,10 +12,10 @@ from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_sc
 class Evaluate_Accuracy(evaluate):
     data = None
     
-    def __init__(self, eName, eDescription, evaluation_metric = "accuracy_score"):
+    def __init__(self, eName=None, eDescription=None, evaluation_metric = "accuracy_score"):
         super().__init__(eName, eDescription)
-
         self.evaluate_name = evaluation_metric
+
     def evaluate(self):
         print('evaluating performance...')
         match self.evaluate_name:
