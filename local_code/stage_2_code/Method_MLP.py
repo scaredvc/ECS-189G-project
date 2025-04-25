@@ -10,6 +10,7 @@ from local_code.stage_1_code.Evaluate_Accuracy import Evaluate_Accuracy
 import torch
 from torch import nn
 import numpy as np
+import time
 
 
 class Method_MLP(method, nn.Module):
@@ -70,6 +71,8 @@ class Method_MLP(method, nn.Module):
         # we don't do mini-batch, we use the whole input as one batch
         # you can try to split X and y into smaller-sized batches by yourself
         for epoch in range(self.max_epoch): # you can do an early stop if self.max_epoch is too much...
+            start_time = time.time()
+
             # get the output, we need to covert X into torch.tensor so pytorch algorithm can operate on it
             y_pred = self.forward(torch.FloatTensor(np.array(X)).to(self.device))
             # convert y to torch.tensor as well
@@ -86,12 +89,14 @@ class Method_MLP(method, nn.Module):
             # update the variables according to the optimizer and the gradients calculated by the above loss.backward function
             optimizer.step()
 
-            if epoch%10 == 0:
-                accuracy_evaluator.data = {
-                    'true_y': y_true.cpu(),
-                    'pred_y': y_pred.max(1)[1].cpu()
-                }
-                print('Epoch:', epoch, 'Accuracy:', accuracy_evaluator.evaluate(), 'Loss:', train_loss.item())
+            accuracy_evaluator.data = {
+                'true_y': y_true.cpu(),
+                'pred_y': y_pred.max(1)[1].cpu()
+            }
+
+            stop_time = time.time()
+            time_in_milliseconds = (stop_time - start_time) * 1000
+            print('Epoch:', epoch, 'Accuracy:', accuracy_evaluator.evaluate(), 'Loss:', train_loss.item(), 'Time:', str(time_in_milliseconds) + 'ms')
     
     def test(self, X):
         # do the testing, and result the result
