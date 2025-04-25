@@ -7,12 +7,17 @@ from local_code.stage_2_code.Evaluate_Accuracy import Evaluate_Accuracy
 import numpy as np
 import torch
 
-data_path = '../data/stage_2_data/'
+data_path = './data/stage_2_data/'
 
 training_data = Dataset_Loader('stage2data_train', '')
 training_data.dataset_source_folder_path = data_path
 training_data.dataset_source_file_name = 'train.csv'
+training_data = training_data.load()
 
 test_data = Dataset_Loader('stage2data_test', '')
 test_data.dataset_source_folder_path = data_path
 test_data.dataset_source_file_name = 'test.csv'
+test_data = test_data.load()
+
+print(training_data)
+print(test_data)
