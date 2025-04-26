@@ -11,6 +11,10 @@ import numpy as np
 
 class Setting_KFold_CV(setting):
     fold = 3
+
+    def __init__(self, sName=None, sDescription=None, fold=3):
+        super().__init__(sName, sDescription)
+        self.fold = fold
     
     def load_run_save_evaluate(self):
         
