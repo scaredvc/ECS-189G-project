@@ -23,9 +23,12 @@ class Method_MLP(method, nn.Module):
     # it defines the the MLP model architecture, e.g.,
     # how many layers, size of variables in each layer, activation function, etc.
     # the size of the input/output portal of the model architecture should be consistent with our data input and desired output
-    def __init__(self, mName, mDescription):
+    def __init__(self, mName, mDescription, max_epoch=500, learning_rate=1e-2):
         method.__init__(self, mName, mDescription)
         nn.Module.__init__(self)
+        self.max_epoch = max_epoch
+        self.learning_rate = learning_rate
+
         # First layer
         self.fc_layer_1 = nn.Linear(784, 256)
         self.activation_func_1 = nn.ReLU()

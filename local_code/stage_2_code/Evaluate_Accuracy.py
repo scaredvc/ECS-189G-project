@@ -7,12 +7,13 @@ Concrete Evaluate class for a specific evaluation metrics
 
 from local_code.base_class.evaluate import evaluate
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
+from typing import Literal
 
 
 class Evaluate_Accuracy(evaluate):
     data = None
     
-    def __init__(self, eName=None, eDescription=None, evaluation_metric = "accuracy_score"):
+    def __init__(self, eName=None, eDescription=None, evaluation_metric: Literal["accuracy_score", "f1_score", "precision_score", "recall_score"] = "accuracy_score"):
         super().__init__(eName, eDescription)
         self.evaluate_name = evaluation_metric
 
