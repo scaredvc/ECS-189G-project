@@ -31,4 +31,17 @@ plt.ylabel('Count')
 plt.title('True vs Predicted Label Distribution')
 plt.show()
 
+# Scatter plot: True vs Predicted
+plt.figure(figsize=(6,6))
+plt.scatter(true_y, pred_y, alpha=0.05, s=2)
+plt.xlabel('True Label')
+plt.ylabel('Predicted Label')
+plt.title('Scatter Plot: True vs Predicted Labels')
+plt.plot([true_y.min(), true_y.max()], [true_y.min(), true_y.max()], 'r--', lw=2, label='y=x')
+plt.legend()
+plt.grid(True)
+plt.show()
+plt.title('True vs Predicted Label Distribution')
+plt.show()
+
 print(loader.data['pred_y'])
