@@ -29,7 +29,7 @@ metric_options = [
 
 epoch_options = [
     ("100", "Quick training, good for testing"),
-    ("200", "Balanced training time"),
+    ("300", "Balanced training time"),
     ("500", "Thorough training"),
     ("1000", "Extended training for complex problems")
 ]
@@ -41,12 +41,6 @@ lr_options = [
     ("0.0001", "Very careful learning - for sensitive problems")
 ]
 
-fold_options = [
-    ("3", "Quick validation with less computational overhead"),
-    ("5", "Standard k-fold cross validation"),
-    ("10", "Thorough validation, better estimate of model performance")
-]
-
 def get_training_params() -> Dict[str, str]:
     print("\n🔧 MLP Model Configuration")
 
@@ -54,7 +48,6 @@ def get_training_params() -> Dict[str, str]:
         'metric': show_menu("📊 Select Evaluation Metric", metric_options),
         'epochs': show_menu("🔄 Select Number of Epochs", epoch_options),
         'learning_rate': show_menu("📈 Select Learning Rate", lr_options),
-        'folds': show_menu("📋 Select Number of Folds", fold_options)
     }
 
     return params
@@ -63,9 +56,12 @@ def print_training_status(message: str, is_complete: bool = False) -> None:
     emoji = "✅" if is_complete else "✨"
     print(f"\n{emoji} {message}")
 
-def print_training_summary(metric: str, mean_score: float, std_score: float) -> None:
-    print(f"\n{'='*60}")
-    print("🎯 Final Performance Results")
-    print(f"{'='*60}")
-    print(f"📈 {metric}: {mean_score:.4f} ± {std_score:.4f}")
-    print(f"{'='*60}")
+def print_training_summary(metric: str, mean_score: float, std_score: float):
+    print("\n============================================================")
+    print("\U0001F3AF Final Performance Results")
+    print("============================================================")
+    if std_score is not None:
+        print(f"\U0001F4C8 {metric}: {mean_score:.4f} ± {std_score:.4f}")
+    else:
+        print(f"\U0001F4C8 {metric}: {mean_score:.4f}")
+    print("============================================================")
