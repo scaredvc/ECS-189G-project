@@ -17,6 +17,7 @@ metrics = [
 ]
 
 colors = ['blue', 'green', 'red', 'orange']
+fig, axes = plt.subplots(2, 2, figsize=(14, 10), sharey=True)
 for idx, (metric, label) in enumerate(metrics):
     loader = Result_Loader('result loader', '')
     loader.result_destination_folder_path = result_folder
@@ -24,15 +25,18 @@ for idx, (metric, label) in enumerate(metrics):
     loader.load()
     data = loader.data
     plotting_data = data['plotting_data']
-    plt.figure(figsize=(8, 5))
-    plt.plot(plotting_data['epoch'], plotting_data['loss'], label=label, color=colors[idx])
-    plt.xlabel('Epoch')
-    plt.ylabel('Loss')
-    plt.title(f'Training Loss vs. Epoch ({label})')
-    plt.grid(True)
-    plt.legend()
-    plt.tight_layout()
-    plt.show()
+    ax = axes[idx // 2, idx % 2]
+    ax.plot(plotting_data['epoch'], plotting_data['loss'], label=label, color=colors[idx])
+    ax.set_xlabel('Epoch')
+    ax.set_ylabel('Loss')
+    ax.set_title(f'{label}')
+    ax.grid(True)
+    ax.legend()
+fig.suptitle('Training Loss vs. Epoch (MLP Convergence by Metric)', fontsize=18)
+fig.tight_layout(rect=[0, 0.03, 1, 0.95])
+plt.show()
+
+
 
 
 

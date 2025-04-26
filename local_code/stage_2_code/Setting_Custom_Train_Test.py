@@ -6,7 +6,6 @@ Concrete SettingModule class for a specific experimental SettingModule
 # License: TBD
 
 from local_code.base_class.setting import setting
-from sklearn.model_selection import KFold
 import numpy as np
 
 class Setting_Custom_Train_Test(setting):
