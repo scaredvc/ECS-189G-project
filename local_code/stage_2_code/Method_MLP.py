@@ -59,6 +59,11 @@ class Method_MLP(method, nn.Module):
         self.to(self.device)
         print(f'Using device: {self.device}')
 
+        self.plotting_data = {
+            'epoch': [],
+            'loss': []
+        }
+
     # it defines the forward propagation function for input x
     # this function will calculate the output layer by layer
 
@@ -127,6 +132,9 @@ class Method_MLP(method, nn.Module):
 
             stop_time = time.time()
             time_in_milliseconds = (stop_time - start_time) * 1000
+
+            self.plotting_data['epoch'].append(epoch)
+            self.plotting_data['loss'].append(train_loss.item())
             print('Epoch:', epoch, 'Accuracy:', accuracy_evaluator.evaluate(), 'Loss:', train_loss.item(), 'Time:', str(time_in_milliseconds) + 'ms')
     
     def test(self, X):
@@ -142,5 +150,5 @@ class Method_MLP(method, nn.Module):
         self.train(self.data['train']['X'], self.data['train']['y'])
         print('--start testing...')
         pred_y = self.test(self.data['test']['X'])
-        return {'pred_y': pred_y, 'true_y': self.data['test']['y']}
+        return {'pred_y': pred_y, 'true_y': self.data['test']['y'], "plotting_data": self.plotting_data}
             
