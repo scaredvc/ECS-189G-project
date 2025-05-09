@@ -33,7 +33,7 @@ class Method_CNN(method, nn.Module):
         self.input_size: tuple[int, int, int] = dataset.get_dimensions()
         self.output_size: int = dataset.get_output_size()
 
-        # Reduced number of pooling layers and adjusted architecture
+        # Add more padding for ORL dataset or reduce pooling operations
         self.cnn_layer1_conv = nn.Conv2d(in_channels=self.input_size[0], out_channels=32, kernel_size=3, stride=1, padding=1)
         self.cnn_layer1_relu = nn.ReLU()
         self.cnn_layer1_pool = nn.MaxPool2d(kernel_size=2, stride=2)
@@ -41,18 +41,32 @@ class Method_CNN(method, nn.Module):
 
         self.cnn_layer2_conv = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, stride=1, padding=1)
         self.cnn_layer2_relu = nn.ReLU()
-        self.cnn_layer2_pool = nn.MaxPool2d(kernel_size=2, stride=2)
+        # Check if dimensions are too small for a second pooling layer
+        h, w = self.input_size[1], self.input_size[2]
+        h_after_pool1 = h // 2
+        w_after_pool1 = w // 2
+        
+        # Only use second pooling if dimensions allow it
+        if h_after_pool1 >= 4 and w_after_pool1 >= 4:
+            self.cnn_layer2_pool = nn.MaxPool2d(kernel_size=2, stride=2)
+            h_out = h_after_pool1 // 2
+            w_out = w_after_pool1 // 2
+        else:
+            # Use a smaller pooling or no pooling for the second layer
+            self.cnn_layer2_pool = nn.Identity()  # No pooling
+            h_out = h_after_pool1
+            w_out = w_after_pool1
+            
         self.cnn_layer2_dropout = nn.Dropout(p=0.2)
         
         self.flatten = nn.Flatten()
 
-        # Calculate the size after convolutions and pooling
-        h, w = self.input_size[1], self.input_size[2]
-        # After two pooling layers with stride 2, dimensions are reduced by factor of 4
-        h_out = h // 4
-        w_out = w // 4
+        # No need to calculate sizes again - they're calculated above
         
-        # Adjust fully connected layers
+        # Print dimensions for debugging
+        print(f"Input dimensions: {self.input_size}, Output after processing: {h_out}x{w_out}")
+        
+        # Adjust fully connected layers with the calculated dimensions
         self.fc_layer1 = nn.Linear(in_features=64 * h_out * w_out, out_features=128)
         self.fc_layer2 = nn.Linear(in_features=128, out_features=self.output_size)
 
