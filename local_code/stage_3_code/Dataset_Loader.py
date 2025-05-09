@@ -31,15 +31,18 @@ class Dataset_Loader(dataset):
             }
         }
         with open(self.dataset_source_folder_path + self.data_file, 'rb') as f:
-            data = pickle.load(f)
-            for instance in data['train']:
+            self.data = pickle.load(f)
+            for instance in self.data['train']:
                 image_matrix = instance['image']
                 image_label = instance['label']
                 result["training_data"]["X"].append(image_matrix)
                 result["training_data"]["y"].append(image_label)
-            for instance in data['test']:
+            for instance in self.data['test']:
                 image_matrix = instance['image']
                 image_label = instance['label']
                 result["test_data"]["X"].append(image_matrix)
                 result["test_data"]["y"].append(image_label)
         return result
+    
+    def get_dimensions(self):
+        return self.data['train'][0]['image'].shape

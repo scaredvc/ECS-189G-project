@@ -11,9 +11,9 @@ import torch
 from torch import nn
 import numpy as np
 import time
+from typing import Literal
 
-
-class Method_MLP(method, nn.Module):
+class Method_CNN(method, nn.Module):
     data = None
     # it defines the max rounds to train the model
     max_epoch = 500
@@ -23,32 +23,52 @@ class Method_MLP(method, nn.Module):
     # it defines the the MLP model architecture, e.g.,
     # how many layers, size of variables in each layer, activation function, etc.
     # the size of the input/output portal of the model architecture should be consistent with our data input and desired output
-    def __init__(self, mName, mDescription, max_epoch=500, learning_rate=1e-2):
+    def __init__(self, mName, mDescription, input_size: tuple[int, int, int], max_epoch=500, learning_rate=1e-2, input_type: Literal["ORL", "CIFAR", "MNIST"] = "ORL"):
         method.__init__(self, mName, mDescription)
         nn.Module.__init__(self)
         self.max_epoch = max_epoch
         self.learning_rate = learning_rate
 
-        # First layer
-        self.fc_layer_1 = nn.Linear(784, 256)
-        self.activation_func_1 = nn.ReLU()
-        self.batch_norm_1 = nn.BatchNorm1d(256)
-        self.dropout_1 = nn.Dropout(p=0.2)
+        self.input_layer = input_size
 
-        # Second layer
-        self.fc_layer_2 = nn.Linear(256, 128)
-        self.activation_func_2 = nn.ReLU()
-        self.batch_norm_2 = nn.BatchNorm1d(128)
-        self.dropout_2 = nn.Dropout(p=0.2)
+        self.cnn_layer1_conv = nn.Conv2d(in_channels=1 , out_channels=1 , kernel_size=3, stride=1, padding=1)
+        self.cnn_layer1_relu = nn.ReLU()
+        self.cnn_layer1_pool = nn.MaxPool2d(kernel_size=3, stride=1)
+        self.cnn_layer1_dropout = nn.Dropout(p=0.2)
 
-        # Third layer
-        self.fc_layer_3 = nn.Linear(128, 64)
-        self.activation_func_3 = nn.ReLU()
-        self.batch_norm_3 = nn.BatchNorm1d(64)
-        self.dropout_3 = nn.Dropout(p=0.2)
+        self.cnn_layer2_conv = nn.Conv2d(in_channels=1 , out_channels=1 , kernel_size=3, stride=1, padding=1)
+        self.cnn_layer2_relu = nn.ReLU()
+        self.cnn_layer2_pool = nn.MaxPool2d(kernel_size=3, stride=1)
+        self.cnn_layer2_dropout = nn.Dropout(p=0.2)
 
-        # Output layer
-        self.fc_output_layer = nn.Linear(64, 10)
+        self.cnn_layer3_conv = nn.Conv2d(in_channels=1 , out_channels=1 , kernel_size=3, stride=1, padding=1)
+        self.cnn_layer3_relu = nn.ReLU()
+        self.cnn_layer3_pool = nn.MaxPool2d(kernel_size=3, stride=1)
+        self.cnn_layer3_dropout = nn.Dropout(p=0.2)
+        
+        self.flatten = nn.Flatten()
+
+
+        
+
+
+        # # First layer
+        # self.activation_func_1 = nn.ReLU()
+        # self.batch_norm_1 = nn.BatchNorm1d(256)
+        # self.dropout_1 = nn.Dropout(p=0.2)
+
+        # # Second layer
+        # self.activation_func_2 = nn.ReLU()
+        # self.batch_norm_2 = nn.BatchNorm1d(128)
+        # self.dropout_2 = nn.Dropout(p=0.2)
+
+        # # Third layer
+        # self.activation_func_3 = nn.ReLU()
+        # self.batch_norm_3 = nn.BatchNorm1d(64)
+        # self.dropout_3 = nn.Dropout(p=0.2)
+
+        # # Output layer
+        # self.fc_output_layer = nn.Linear(64, 10)
 
         # Move model to GPU if available
         print(f'CUDA available: {torch.cuda.is_available()}')
@@ -69,28 +89,40 @@ class Method_MLP(method, nn.Module):
 
     def forward(self, input_features):
         '''Forward propagation'''
-        # First hidden layer
-        hidden1 = self.fc_layer_1(input_features)
-        hidden1_norm = self.batch_norm_1(hidden1)
-        hidden1_activated = self.activation_func_1(hidden1_norm)
-        hidden1_regularized = self.dropout_1(hidden1_activated)
+        
+        self.input_layer = 
 
-        # Second hidden layer
-        hidden2 = self.fc_layer_2(hidden1_regularized)
-        hidden2_norm = self.batch_norm_2(hidden2)
-        hidden2_activated = self.activation_func_2(hidden2_norm)
-        hidden2_regularized = self.dropout_2(hidden2_activated)
 
-        # Third hidden layer
-        hidden3 = self.fc_layer_3(hidden2_regularized)
-        hidden3_norm = self.batch_norm_3(hidden3)
-        hidden3_activated = self.activation_func_3(hidden3_norm)
-        hidden3_regularized = self.dropout_3(hidden3_activated)
 
-        # Output layer
-        logits = self.fc_output_layer(hidden3_regularized)
 
-        return logits
+
+
+
+
+
+
+        # # First hidden layer
+        # hidden1 = self.fc_layer_1(input_features)
+        # hidden1_norm = self.batch_norm_1(hidden1)
+        # hidden1_activated = self.activation_func_1(hidden1_norm)
+        # hidden1_regularized = self.dropout_1(hidden1_activated)
+
+        # # Second hidden layer
+        # hidden2 = self.fc_layer_2(hidden1_regularized)
+        # hidden2_norm = self.batch_norm_2(hidden2)
+        # hidden2_activated = self.activation_func_2(hidden2_norm)
+        # hidden2_regularized = self.dropout_2(hidden2_activated)
+
+        # # Third hidden layer
+        # hidden3 = self.fc_layer_3(hidden2_regularized)
+        # hidden3_norm = self.batch_norm_3(hidden3)
+        # hidden3_activated = self.activation_func_3(hidden3_norm)
+        # hidden3_regularized = self.dropout_3(hidden3_activated)
+
+        # # Output layer
+        # logits = self.fc_output_layer(hidden3_regularized)
+
+        # return logits
 
     # backward error propagation will be implemented by pytorch automatically
     # so we don't need to define the error backpropagation function here
@@ -110,7 +142,7 @@ class Method_MLP(method, nn.Module):
             start_time = time.time()
 
             # get the output, we need to covert X into torch.tensor so pytorch algorithm can operate on it
-            y_pred = self.forward(torch.FloatTensor(np.array(X)).to(self.device))
+            y_pred = self.forward(torch.FloatTensor(X).to(self.device))
             # convert y to torch.tensor as well
             y_true = torch.LongTensor(np.array(y)).to(self.device)
             # calculate the training loss
