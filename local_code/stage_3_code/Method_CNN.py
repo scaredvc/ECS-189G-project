@@ -6,7 +6,7 @@ Concrete MethodModule class for a specific learning MethodModule
 # License: TBD
 
 from local_code.base_class.method import method
-from local_code.stage_1_code.Evaluate_Accuracy import Evaluate_Accuracy
+from local_code.stage_3_code.Evaluate_Accuracy import Evaluate_Accuracy
 import torch
 from torch import nn
 import numpy as np
@@ -37,7 +37,7 @@ class Method_CNN(method, nn.Module):
         self.cnn_layer1_conv = nn.Conv2d(in_channels=self.input_size[0], out_channels=32, kernel_size=3, stride=1, padding=1)
         self.cnn_layer1_relu = nn.ReLU()
         self.cnn_layer1_pool = nn.MaxPool2d(kernel_size=2, stride=2)
-        self.cnn_layer1_dropout = nn.Dropout(p=0.2)
+        self.cnn_layer1_dropout = nn.Dropout(p=0.3)
 
         self.cnn_layer2_conv = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, stride=1, padding=1)
         self.cnn_layer2_relu = nn.ReLU()
@@ -57,7 +57,7 @@ class Method_CNN(method, nn.Module):
             h_out = h_after_pool1
             w_out = w_after_pool1
             
-        self.cnn_layer2_dropout = nn.Dropout(p=0.2)
+        self.cnn_layer2_dropout = nn.Dropout(p=0.3)
         
         self.flatten = nn.Flatten()
 
@@ -154,7 +154,7 @@ class Method_CNN(method, nn.Module):
     
     def test(self, X):
         # do the testing, and result the result
-        y_pred = self.forward(torch.FloatTensor(np.array(X)).to(self.device))
+        y_pred = self.forward(torch.FloatTensor(X).to(self.device))
         # convert the probability distributions to the corresponding labels
         # instances will get the labels corresponding to the largest probability
         return y_pred.max(1)[1].cpu()
