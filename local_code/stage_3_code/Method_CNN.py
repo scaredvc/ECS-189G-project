@@ -12,6 +12,7 @@ from torch import nn
 import numpy as np
 import time
 from typing import Literal
+from local_code.stage_3_code.Dataset_Loader import Dataset_Loader
 
 class Method_CNN(method, nn.Module):
     data = None
@@ -23,15 +24,16 @@ class Method_CNN(method, nn.Module):
     # it defines the the MLP model architecture, e.g.,
     # how many layers, size of variables in each layer, activation function, etc.
     # the size of the input/output portal of the model architecture should be consistent with our data input and desired output
-    def __init__(self, mName, mDescription, input_size: tuple[int, int, int], max_epoch=500, learning_rate=1e-2, input_type: Literal["ORL", "CIFAR", "MNIST"] = "ORL"):
+    def __init__(self, mName, mDescription, dataset: Dataset_Loader, max_epoch=500, learning_rate=1e-2, input_type: Literal["ORL", "CIFAR", "MNIST"] = "ORL"):
         method.__init__(self, mName, mDescription)
         nn.Module.__init__(self)
         self.max_epoch = max_epoch
         self.learning_rate = learning_rate
 
-        self.input_layer = input_size
+        self.input_size = dataset.get_dimensions()
+        self.output_size = dataset.get_output_size()
 
-        self.cnn_layer1_conv = nn.Conv2d(in_channels=1 , out_channels=1 , kernel_size=3, stride=1, padding=1)
+        self.cnn_layer1_conv = nn.Conv2d(in_channels=self.input_size[0], out_channels=1 , kernel_size=3, stride=1, padding=1)
         self.cnn_layer1_relu = nn.ReLU()
         self.cnn_layer1_pool = nn.MaxPool2d(kernel_size=3, stride=1)
         self.cnn_layer1_dropout = nn.Dropout(p=0.2)
@@ -47,28 +49,6 @@ class Method_CNN(method, nn.Module):
         self.cnn_layer3_dropout = nn.Dropout(p=0.2)
         
         self.flatten = nn.Flatten()
-
-
-        
-
-
-        # # First layer
-        # self.activation_func_1 = nn.ReLU()
-        # self.batch_norm_1 = nn.BatchNorm1d(256)
-        # self.dropout_1 = nn.Dropout(p=0.2)
-
-        # # Second layer
-        # self.activation_func_2 = nn.ReLU()
-        # self.batch_norm_2 = nn.BatchNorm1d(128)
-        # self.dropout_2 = nn.Dropout(p=0.2)
-
-        # # Third layer
-        # self.activation_func_3 = nn.ReLU()
-        # self.batch_norm_3 = nn.BatchNorm1d(64)
-        # self.dropout_3 = nn.Dropout(p=0.2)
-
-        # # Output layer
-        # self.fc_output_layer = nn.Linear(64, 10)
 
         # Move model to GPU if available
         print(f'CUDA available: {torch.cuda.is_available()}')
@@ -89,17 +69,6 @@ class Method_CNN(method, nn.Module):
 
     def forward(self, input_features):
         '''Forward propagation'''
-        
-        self.input_layer = 
-
-
-
-
-
-
-
-
-
 
         # # First hidden layer
         # hidden1 = self.fc_layer_1(input_features)

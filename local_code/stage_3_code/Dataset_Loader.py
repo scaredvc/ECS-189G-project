@@ -46,3 +46,7 @@ class Dataset_Loader(dataset):
     
     def get_dimensions(self):
         return self.data['train'][0]['image'].shape
+
+    def get_output_size(self):
+        training_unique_labels = set([a['label'] for a in self.data['train']])
+        return len(training_unique_labels)
