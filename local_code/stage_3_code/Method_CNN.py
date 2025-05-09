@@ -13,6 +13,7 @@ import numpy as np
 import time
 from typing import Literal
 from local_code.stage_3_code.Dataset_Loader import Dataset_Loader
+from torch.utils.data import TensorDataset, DataLoader
 
 class Method_CNN(method, nn.Module):
     data = None
@@ -20,24 +21,40 @@ class Method_CNN(method, nn.Module):
     max_epoch = 500
     # it defines the learning rate for gradient descent based optimizer for model learning
     learning_rate = 1e-2
+    # batch size for mini-batch training
+    batch_size = 128
+    # patience for early stopping
+    patience = 10
 
     # it defines the the MLP model architecture, e.g.,
     # how many layers, size of variables in each layer, activation function, etc.
     # the size of the input/output portal of the model architecture should be consistent with our data input and desired output
-    def __init__(self, mName, mDescription, dataset: Dataset_Loader, max_epoch=500, learning_rate=1e-2, input_type: Literal["ORL", "CIFAR", "MNIST"] = "ORL"):
+    def __init__(self, mName, mDescription, dataset: Dataset_Loader, max_epoch=500, learning_rate=1e-2, input_type: Literal["ORL", "CIFAR", "MNIST"] = "ORL", batch_size=128):
         method.__init__(self, mName, mDescription)
         nn.Module.__init__(self)
         self.max_epoch = max_epoch
         self.learning_rate = learning_rate
+        self.batch_size = batch_size
 
-        self.input_size: tuple[int, int, int] = dataset.get_dimensions()
-        if len(self.input_size) == 2:
-            self.input_size = (*self.input_size, 1)
+        # Determine input dimensions and ensure correct channel order (C, H, W)
+        raw_dim = dataset.get_dimensions()
+        if len(raw_dim) == 2:
+            # grayscale image: (H, W) -> (1, H, W)
+            channels, height, width = 1, raw_dim[0], raw_dim[1]
+        elif len(raw_dim) == 3:
+            # Could be (H, W, C) or (C, H, W). Assume channel-last if last dim is 1/3
+            if raw_dim[2] in {1, 3} and raw_dim[0] not in {1, 3}:
+                channels, height, width = raw_dim[2], raw_dim[0], raw_dim[1]
+            else:
+                channels, height, width = raw_dim[0], raw_dim[1], raw_dim[2]
+        else:
+            raise ValueError(f"Unsupported input dimension format: {raw_dim}")
 
+        self.input_size = (channels, height, width)
         self.output_size: int = dataset.get_output_size()
 
         # Add more padding for ORL dataset or reduce pooling operations
-        self.cnn_layer1_conv = nn.Conv2d(in_channels=self.input_size[0], out_channels=32, kernel_size=3, stride=1, padding=1)
+        self.cnn_layer1_conv = nn.Conv2d(in_channels=channels, out_channels=32, kernel_size=3, stride=1, padding=1)
         self.cnn_layer1_relu = nn.ReLU()
         self.cnn_layer1_pool = nn.MaxPool2d(kernel_size=2, stride=2)
         self.cnn_layer1_dropout = nn.Dropout(p=0.3)
@@ -45,7 +62,7 @@ class Method_CNN(method, nn.Module):
         self.cnn_layer2_conv = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, stride=1, padding=1)
         self.cnn_layer2_relu = nn.ReLU()
         # Check if dimensions are too small for a second pooling layer
-        h, w = self.input_size[1], self.input_size[2]
+        h, w = height, width
         h_after_pool1 = h // 2
         w_after_pool1 = w // 2
         
@@ -67,7 +84,7 @@ class Method_CNN(method, nn.Module):
         # No need to calculate sizes again - they're calculated above
         
         # Print dimensions for debugging
-        print(f"Input dimensions: {self.input_size}, Output after processing: {h_out}x{w_out}")
+        print(f"Input dimensions (C,H,W): {self.input_size}, Output after processing: {h_out}x{w_out}")
         
         # Adjust fully connected layers with the calculated dimensions
         self.fc_layer1 = nn.Linear(in_features=64 * h_out * w_out, out_features=128)
@@ -86,6 +103,20 @@ class Method_CNN(method, nn.Module):
             'epoch': [],
             'loss': []
         }
+
+    def _prepare_input(self, X):
+        """Convert numpy/list image batch to torch tensor with shape (N, C, H, W)."""
+        X_tensor = torch.FloatTensor(np.array(X))  # ensure contiguous tensor
+        if X_tensor.ndim == 3:
+            # (N, H, W) -> (N, 1, H, W)
+            X_tensor = X_tensor.unsqueeze(1)
+        elif X_tensor.ndim == 4:
+            # if channel last (N, H, W, C) swap to channel first
+            if X_tensor.shape[-1] == self.input_size[0]:
+                X_tensor = X_tensor.permute(0, 3, 1, 2)
+        else:
+            raise ValueError("Unexpected input tensor dimensions. Expected 3 or 4 dims.")
+        return X_tensor.to(self.device)
 
     # it defines the forward propagation function for input x
     # this function will calculate the output layer by layer
@@ -113,60 +144,105 @@ class Method_CNN(method, nn.Module):
     # backward error propagation will be implemented by pytorch automatically
     # so we don't need to define the error backpropagation function here
 
-    def train(self, X, y):
+    def fit_model(self, X, y):
         # check here for the torch.optim doc: https://pytorch.org/docs/stable/optim.html
         optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
         # check here for the nn.CrossEntropyLoss doc: https://pytorch.org/docs/stable/generated/torch.nn.CrossEntropyLoss.html
         loss_function = nn.CrossEntropyLoss()
         # for training accuracy investigation purpose
         accuracy_evaluator = Evaluate_Accuracy('training evaluator', '')
-
-        # it will be an iterative gradient updating process
-        # we don't do mini-batch, we use the whole input as one batch
-        # you can try to split X and y into smaller-sized batches by yourself
-        for epoch in range(self.max_epoch): # you can do an early stop if self.max_epoch is too much...
+        
+        # Preprocess data once (not in every epoch)
+        X_tensor = self._prepare_input(X)
+        y_tensor = torch.LongTensor(np.array(y)).to(self.device)
+        
+        # Create DataLoader for mini-batch training
+        train_dataset = TensorDataset(X_tensor, y_tensor)
+        train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True)
+        
+        # Early stopping variables
+        best_loss = float('inf')
+        no_improvement_count = 0
+        
+        # Training loop
+        for epoch in range(self.max_epoch):
             start_time = time.time()
-
-            # get the output, we need to covert X into torch.tensor so pytorch algorithm can operate on it
-            y_pred = self.forward(torch.FloatTensor(X).to(self.device))
-            # convert y to torch.tensor as well
-            y_true = torch.LongTensor(np.array(y)).to(self.device)
-            # calculate the training loss
-            train_loss = loss_function(y_pred, y_true)
-
-            # check here for the gradient init doc: https://pytorch.org/docs/stable/generated/torch.optim.Optimizer.zero_grad.html
-            optimizer.zero_grad()
-            # check here for the loss.backward doc: https://pytorch.org/docs/stable/generated/torch.Tensor.backward.html
-            # do the error backpropagation to calculate the gradients
-            train_loss.backward()
-            # check here for the opti.step doc: https://pytorch.org/docs/stable/optim.html
-            # update the variables according to the optimizer and the gradients calculated by the above loss.backward function
-            optimizer.step()
-
+            self.train()  # Set model to training mode
+            epoch_loss = 0
+            all_preds = []
+            all_true = []
+            
+            # Mini-batch training
+            for batch_x, batch_y in train_loader:
+                # Forward pass
+                pred = self.forward(batch_x)
+                loss = loss_function(pred, batch_y)
+                
+                # Backward pass
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
+                
+                # Collect data for accuracy calculation
+                epoch_loss += loss.item() * batch_x.size(0)
+                all_preds.append(pred.max(1)[1].detach().cpu())
+                all_true.append(batch_y.cpu())
+            
+            # Calculate epoch statistics
+            epoch_loss /= len(train_dataset)
+            all_preds = torch.cat(all_preds)
+            all_true = torch.cat(all_true)
+            
             accuracy_evaluator.data = {
-                'true_y': y_true.cpu(),
-                'pred_y': y_pred.max(1)[1].cpu()
+                'true_y': all_true,
+                'pred_y': all_preds
             }
+            accuracy = accuracy_evaluator.evaluate()
 
             stop_time = time.time()
             time_in_milliseconds = (stop_time - start_time) * 1000
 
             self.plotting_data['epoch'].append(epoch)
-            self.plotting_data['loss'].append(train_loss.item())
-            print('Epoch:', epoch, 'Accuracy:', accuracy_evaluator.evaluate(), 'Loss:', train_loss.item(), 'Time:', str(time_in_milliseconds) + 'ms')
+            self.plotting_data['loss'].append(epoch_loss)
+            print(f'Epoch: {epoch}, Accuracy: {accuracy:.4f}, Loss: {epoch_loss:.6f}, Time: {time_in_milliseconds:.0f}ms')
+            
+            # Early stopping
+            if epoch_loss < best_loss:
+                best_loss = epoch_loss
+                no_improvement_count = 0
+            else:
+                no_improvement_count += 1
+                
+            if no_improvement_count >= self.patience:
+                print(f'Early stopping at epoch {epoch}')
+                break
     
     def test(self, X):
         # do the testing, and result the result
-        y_pred = self.forward(torch.FloatTensor(X).to(self.device))
-        # convert the probability distributions to the corresponding labels
-        # instances will get the labels corresponding to the largest probability
-        return y_pred.max(1)[1].cpu()
+        self.eval()  # Set model to evaluation mode
+        with torch.no_grad():
+            # Process data in batches to avoid memory issues
+            if len(X) > self.batch_size:
+                all_preds = []
+                X_tensor = self._prepare_input(X)
+                # Create test DataLoader
+                test_dataset = TensorDataset(X_tensor)
+                test_loader = DataLoader(test_dataset, batch_size=self.batch_size)
+                
+                for batch in test_loader:
+                    batch_x = batch[0]
+                    batch_pred = self.forward(batch_x)
+                    all_preds.append(batch_pred.max(1)[1].cpu())
+                
+                return torch.cat(all_preds)
+            else:
+                y_pred = self.forward(self._prepare_input(X))
+                return y_pred.max(1)[1].cpu()
     
     def run(self):
         print('method running...')
         print('--start training...')
-        self.train(self.data['train']['X'], self.data['train']['y'])
+        self.fit_model(self.data['train']['X'], self.data['train']['y'])
         print('--start testing...')
         pred_y = self.test(self.data['test']['X'])
         return {'pred_y': pred_y, 'true_y': self.data['test']['y'], "plotting_data": self.plotting_data}
-            
