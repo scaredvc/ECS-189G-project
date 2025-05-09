@@ -30,26 +30,33 @@ class Method_CNN(method, nn.Module):
         self.max_epoch = max_epoch
         self.learning_rate = learning_rate
 
-        self.input_size = dataset.get_dimensions()
-        self.output_size = dataset.get_output_size()
+        self.input_size: tuple[int, int, int] = dataset.get_dimensions()
+        self.output_size: int = dataset.get_output_size()
 
-        self.cnn_layer1_conv = nn.Conv2d(in_channels=self.input_size[0], out_channels=1 , kernel_size=3, stride=1, padding=1)
+        # Reduced number of pooling layers and adjusted architecture
+        self.cnn_layer1_conv = nn.Conv2d(in_channels=self.input_size[0], out_channels=32, kernel_size=3, stride=1, padding=1)
         self.cnn_layer1_relu = nn.ReLU()
-        self.cnn_layer1_pool = nn.MaxPool2d(kernel_size=3, stride=1)
+        self.cnn_layer1_pool = nn.MaxPool2d(kernel_size=2, stride=2)
         self.cnn_layer1_dropout = nn.Dropout(p=0.2)
 
-        self.cnn_layer2_conv = nn.Conv2d(in_channels=1 , out_channels=1 , kernel_size=3, stride=1, padding=1)
+        self.cnn_layer2_conv = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, stride=1, padding=1)
         self.cnn_layer2_relu = nn.ReLU()
-        self.cnn_layer2_pool = nn.MaxPool2d(kernel_size=3, stride=1)
+        self.cnn_layer2_pool = nn.MaxPool2d(kernel_size=2, stride=2)
         self.cnn_layer2_dropout = nn.Dropout(p=0.2)
-
-        self.cnn_layer3_conv = nn.Conv2d(in_channels=1 , out_channels=1 , kernel_size=3, stride=1, padding=1)
-        self.cnn_layer3_relu = nn.ReLU()
-        self.cnn_layer3_pool = nn.MaxPool2d(kernel_size=3, stride=1)
-        self.cnn_layer3_dropout = nn.Dropout(p=0.2)
         
         self.flatten = nn.Flatten()
 
+        # Calculate the size after convolutions and pooling
+        h, w = self.input_size[1], self.input_size[2]
+        # After two pooling layers with stride 2, dimensions are reduced by factor of 4
+        h_out = h // 4
+        w_out = w // 4
+        
+        # Adjust fully connected layers
+        self.fc_layer1 = nn.Linear(in_features=64 * h_out * w_out, out_features=128)
+        self.fc_layer2 = nn.Linear(in_features=128, out_features=self.output_size)
+
+        self.softmax = nn.Softmax(dim=1)
         # Move model to GPU if available
         print(f'CUDA available: {torch.cuda.is_available()}')
         if torch.cuda.is_available():
@@ -69,29 +76,23 @@ class Method_CNN(method, nn.Module):
 
     def forward(self, input_features):
         '''Forward propagation'''
+        layer1_conv = self.cnn_layer1_conv(input_features)
+        layer1_relu = self.cnn_layer1_relu(layer1_conv)
+        layer1_pool = self.cnn_layer1_pool(layer1_relu)
+        layer1_dropout = self.cnn_layer1_dropout(layer1_pool)
 
-        # # First hidden layer
-        # hidden1 = self.fc_layer_1(input_features)
-        # hidden1_norm = self.batch_norm_1(hidden1)
-        # hidden1_activated = self.activation_func_1(hidden1_norm)
-        # hidden1_regularized = self.dropout_1(hidden1_activated)
+        layer2_conv = self.cnn_layer2_conv(layer1_dropout)
+        layer2_relu = self.cnn_layer2_relu(layer2_conv)
+        layer2_pool = self.cnn_layer2_pool(layer2_relu)
+        layer2_dropout = self.cnn_layer2_dropout(layer2_pool)
 
-        # # Second hidden layer
-        # hidden2 = self.fc_layer_2(hidden1_regularized)
-        # hidden2_norm = self.batch_norm_2(hidden2)
-        # hidden2_activated = self.activation_func_2(hidden2_norm)
-        # hidden2_regularized = self.dropout_2(hidden2_activated)
+        flatten = self.flatten(layer2_dropout)
+        
+        fc_layer1 = self.fc_layer1(flatten)
+        fc_layer2 = self.fc_layer2(fc_layer1)
+        output = self.softmax(fc_layer2)
 
-        # # Third hidden layer
-        # hidden3 = self.fc_layer_3(hidden2_regularized)
-        # hidden3_norm = self.batch_norm_3(hidden3)
-        # hidden3_activated = self.activation_func_3(hidden3_norm)
-        # hidden3_regularized = self.dropout_3(hidden3_activated)
-
-        # # Output layer
-        # logits = self.fc_output_layer(hidden3_regularized)
-
-        # return logits
+        return output
 
     # backward error propagation will be implemented by pytorch automatically
     # so we don't need to define the error backpropagation function here
