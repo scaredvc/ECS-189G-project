@@ -21,8 +21,6 @@ class Evaluate_Accuracy(evaluate):
         print('evaluating performance...')
         match self.evaluate_name:
             case "accuracy_score":
-                print(self.data['true_y'])
-                print(self.data['pred_y'])
                 return accuracy_score(self.data['true_y'], self.data['pred_y'])
             case "f1_score":
                 return f1_score(self.data['true_y'], self.data['pred_y'], average='weighted')

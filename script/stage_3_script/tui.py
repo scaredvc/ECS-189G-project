@@ -20,6 +20,12 @@ def show_menu(title: str, options: List[Tuple[str, str]]) -> str:
         except ValueError:
             print("\n❌ Please enter a valid number.")
 
+dataset_options = [
+    ("ORL", "Human face images - 40 people, 10 images each (9 train, 1 test), 112x92x3 grayscale"),
+    ("MNIST", "Hand-written digit images - 60,000 training, 10,000 testing, 28x28 grayscale"),
+    ("CIFAR", "Colored object images - 50,000 training, 10,000 testing, 32x32x3 color")
+]
+
 metric_options = [
     ("accuracy_score", "Standard accuracy - ratio of correct predictions"),
     ("f1_score", "Harmonic mean of precision and recall"),
@@ -42,9 +48,10 @@ lr_options = [
 ]
 
 def get_training_params() -> Dict[str, str]:
-    print("\n🔧 MLP Model Configuration")
+    print("\n🔧 CNN Model Configuration")
 
     params = {
+        'dataset': show_menu("📊 Select Dataset", dataset_options),
         'metric': show_menu("📊 Select Evaluation Metric", metric_options),
         'epochs': show_menu("🔄 Select Number of Epochs", epoch_options),
         'learning_rate': show_menu("📈 Select Learning Rate", lr_options),

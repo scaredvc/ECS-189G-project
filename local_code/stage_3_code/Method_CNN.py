@@ -31,6 +31,9 @@ class Method_CNN(method, nn.Module):
         self.learning_rate = learning_rate
 
         self.input_size: tuple[int, int, int] = dataset.get_dimensions()
+        if len(self.input_size) == 2:
+            self.input_size = (*self.input_size, 1)
+
         self.output_size: int = dataset.get_output_size()
 
         # Add more padding for ORL dataset or reduce pooling operations
