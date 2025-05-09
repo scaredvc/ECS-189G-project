@@ -70,7 +70,6 @@ class Method_CNN(method, nn.Module):
         self.fc_layer1 = nn.Linear(in_features=64 * h_out * w_out, out_features=128)
         self.fc_layer2 = nn.Linear(in_features=128, out_features=self.output_size)
 
-        self.softmax = nn.Softmax(dim=1)
         # Move model to GPU if available
         print(f'CUDA available: {torch.cuda.is_available()}')
         if torch.cuda.is_available():
@@ -104,7 +103,7 @@ class Method_CNN(method, nn.Module):
         
         fc_layer1 = self.fc_layer1(flatten)
         fc_layer2 = self.fc_layer2(fc_layer1)
-        output = self.softmax(fc_layer2)
+        output = fc_layer2
 
         return output
 
