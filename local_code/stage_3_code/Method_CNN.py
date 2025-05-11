@@ -94,12 +94,19 @@ class Method_CNN(method, nn.Module):
         self.fc_dropout = nn.Dropout(p=0.3)
         self.fc_layer2 = nn.Linear(in_features=128, out_features=self.output_size)
 
-        # Move model to GPU if available
+        # Determine the best available device (CUDA, MPS, or CPU)
         print(f'CUDA available: {torch.cuda.is_available()}')
         if torch.cuda.is_available():
             print(f'CUDA device count: {torch.cuda.device_count()}')
             print(f'CUDA device name: {torch.cuda.get_device_name(0)}')
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+            self.device = torch.device('cuda')
+        # Check for MPS (Metal Performance Shaders) support on Apple Silicon
+        elif hasattr(torch, 'mps') and torch.backends.mps.is_available():
+            print(f'MPS (Metal Performance Shaders) available')
+            self.device = torch.device('mps')
+        else:
+            self.device = torch.device('cpu')
+    
         self.to(self.device)
         print(f'Using device: {self.device}')
 
