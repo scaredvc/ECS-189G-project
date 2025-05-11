@@ -29,11 +29,7 @@ ECS-189G-project/
 To run the CNN implementation:
 
 ```bash
-# Navigate to the script directory  
-cd script/stage_3_script  
-  
-# Run the main script  
-python main.py
+python -m script.stage_3_script.main
 ```
 
 The interactive TUI will guide you through the selection of:
@@ -85,9 +81,6 @@ The project employs a structured approach based on object-oriented programming p
 - **Base Classes**: Abstract classes define the interfaces for dataset, method, evaluation, result, and setting components
 - **Concrete Implementations**: Stage-specific implementations extend base classes
 - **Settings**: Support for different evaluation settings (K-fold CV, train-test split, etc.)
-
-## 📝 Credits
-This project appears to be developed for the ECS-189G course. The base framework was originally created by Jiawei Zhang.
 
 ## 🔗 Notes
 - The repository is structured as a learning progression, with each stage building upon the previous one
