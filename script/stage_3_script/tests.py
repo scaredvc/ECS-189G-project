@@ -7,4 +7,5 @@ dataset = Dataset_Loader('stage 3 data train', '', data_file='ORL')
 dataset.dataset_source_folder_path = data_path
 
 result = dataset.load()
-print(result)
+# print(result)
+
