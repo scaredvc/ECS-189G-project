@@ -19,16 +19,11 @@ ECS-189G-project/
     └── stage_3_script/        # Entry points for stage 3  
 ```
 
-## 📋 Requirements
-- Python 3.x
-- PyTorch
-- NumPy
-- scikit-learn (for evaluation metrics)
-
 ## 🚀 Usage
 To run the CNN implementation:
 
 ```bash
+pip install -r requirements.txt
 python -m script.stage_3_script.main
 ```
 
