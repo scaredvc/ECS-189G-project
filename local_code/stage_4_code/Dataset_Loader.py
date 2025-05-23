@@ -6,40 +6,63 @@ Concrete IO class for a specific dataset
 # License: TBD
 
 from local_code.base_class.dataset import dataset
+import os
+from typing import Literal
 
 
 class Dataset_Loader(dataset):
     data = None
     dataset_source_folder_path = None
-    dataset_source_file_name = None
     
-    def __init__(self, dName=None, dDescription=None, training_data_file="", test_data_file=""):
+    def __init__(self, dName=None, dDescription=None, task_type: Literal["text_classification", "text_generation"] = "text_classification"):
         super().__init__(dName, dDescription)
-        self.training_data_file = training_data_file
-        self.test_data_file = test_data_file
+        self.task_type = task_type
     
-    def load(self):
-        print('loading data...')
+    def _load_text_classification_data(self):
         result = {
-            "training_data": {
-                "X": [],
-                "y": []
-            },
-            "test_data": {
-                "X": [],
-                "y": []
-            }
+            "training_data": {"X": [], "y": []},
+            "test_data": {"X": [], "y": []}
         }
-        with open(self.dataset_source_folder_path + self.training_data_file, 'r') as f:
-            for line in f:
-                line = line.strip('\n')
-                elements = [int(i) for i in line.split(',')]
-                result["training_data"]["X"].append(elements[1:])
-                result["training_data"]["y"].append(elements[0])
-        with open(self.dataset_source_folder_path + self.test_data_file, 'r') as f:
-            for line in f:
-                line = line.strip('\n')
-                elements = [int(i) for i in line.split(',')]
-                result["test_data"]["X"].append(elements[1:])
-                result["test_data"]["y"].append(elements[0])
+        
+        data_splits = {
+            "training_data": "train",
+            "test_data": "test"
+        }
+        sentiments = {
+            "pos": 1, # Positive label
+            "neg": 0  # Negative label
+        }
+
+        if self.dataset_source_folder_path is None:
+            raise ValueError("dataset_source_folder_path cannot be None for text classification")
+
+        base_path = os.path.join(self.dataset_source_folder_path, "text_classification")
+
+        for split_key, split_folder_name in data_splits.items():
+            for sentiment_name, sentiment_label in sentiments.items():
+                current_path = os.path.join(base_path, split_folder_name, sentiment_name)
+                if not os.path.isdir(current_path):
+                    print(f"Warning: Directory not found - {current_path}")
+                    continue
+                
+                for filename in os.listdir(current_path):
+                    if filename.endswith(".txt"):
+                        file_path = os.path.join(current_path, filename)
+                        try:
+                            with open(file_path, 'r', encoding='utf-8') as f:
+                                text_content = f.read()
+                            result[split_key]["X"].append(text_content)
+                            result[split_key]["y"].append(sentiment_label)
+                        except Exception as e:
+                            print(f"Error reading file {file_path}: {e}")
         return result
+
+    def load(self):
+        print(f'loading data for {self.task_type}...')
+        if self.task_type == "text_classification":
+            return self._load_text_classification_data()
+        elif self.task_type == "text_generation":
+            # TODO: implement text generation data loading, this is a placeholder
+            return {"training_data": {"X": [], "y": []}, "test_data": {"X": [], "y": []}}
+        else:
+            raise ValueError(f"Unsupported task_type: {self.task_type}")
