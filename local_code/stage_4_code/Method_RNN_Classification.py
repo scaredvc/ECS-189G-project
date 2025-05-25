@@ -12,7 +12,7 @@ import torch
 from torch import nn
 import numpy as np
 import time
-from torch.nn.utils.rnn import pack_padded_sequence, pad_sequence
+from torch.nn.utils.rnn import pack_padded_sequence, pad_sequence, pad_packed_sequence
 
 class Method_RNN(method, nn.Module):
     data = None
@@ -54,6 +54,15 @@ class Method_RNN(method, nn.Module):
             'loss': []
         }
 
+        self.layer_norm = nn.LayerNorm(hidden_dim * 2)
+
+        # Add attention layer
+        self.attention = nn.Sequential(
+            nn.Linear(hidden_dim * 2, hidden_dim),
+            nn.Tanh(),
+            nn.Linear(hidden_dim, 1)
+        )
+
     def forward(self, text, lengths):
         # text shape: (batch_size, seq_length)
         
@@ -66,12 +75,20 @@ class Method_RNN(method, nn.Module):
         # Pass through RNN
         packed_output, (hidden, cell) = self.rnn(packed_input)
         
-        # Use the final hidden state from both directions
-        hidden = self.dropout(torch.cat((hidden[-2,:,:], hidden[-1,:,:]), dim=1))
+        # Unpack the sequence for attention
+        output, _ = pad_packed_sequence(packed_output, batch_first=True)
         
-        # Pass through linear layer
-        output = self.fc(hidden)
+        # Apply attention
+        attention_weights = self.attention(output)
+        attention_weights = torch.softmax(attention_weights, dim=1)
+        attended_output = torch.sum(attention_weights * output, dim=1)
         
+        # Apply dropout and layer norm
+        attended_output = self.dropout(attended_output)
+        attended_output = self.layer_norm(attended_output)
+        
+        # Final classification
+        output = self.fc(attended_output)
         return output
 
     def train(self, X, y):
