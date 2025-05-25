@@ -59,24 +59,6 @@ class Dataset_Loader(dataset):
         self.data = result
         return result
     
-    def get_dimensions(self):
-        if self.data_type == "classification":
-            # For classification, return average sequence length
-            return len(self.data['training_data']['X'][0].split())
-        else:
-            # For generation, return vocabulary size
-            unique_chars = set(self.data['training_data']['X'])
-            return len(unique_chars)
-    
-    def get_output_size(self):
-        if self.data_type == "classification":
-            return 2  # Binary classification (positive/negative)
-        else:
-            # For generation, output size is vocabulary size
-            unique_chars = set(self.data['training_data']['X'])
-            return len(unique_chars)
-
-
     # for testing purposes
     def verify_data(self):
         """Verify the loaded classification data"""
