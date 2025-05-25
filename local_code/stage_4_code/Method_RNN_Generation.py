@@ -46,6 +46,20 @@ class Method_RNN_Generator(method, nn.Module):
             'epoch': [],
             'loss': []
         }
+        
+        # Add layer normalization
+        self.layer_norm = nn.LayerNorm(hidden_dim)
+        
+        # Initialize weights properly
+        self.init_weights()
+
+    def init_weights(self):
+        """Initialize weights for better training"""
+        for name, param in self.named_parameters():
+            if 'weight' in name:
+                nn.init.xavier_uniform_(param)
+            elif 'bias' in name:
+                nn.init.zeros_(param)
 
     def forward(self, x, hidden=None):
         batch_size = x.size(0)
@@ -59,6 +73,9 @@ class Method_RNN_Generator(method, nn.Module):
         
         # Pass through LSTM
         output, hidden = self.rnn(embedded, hidden)
+        
+        # Add layer normalization
+        output = self.layer_norm(output)
         
         # Apply dropout
         output = self.dropout(output)
