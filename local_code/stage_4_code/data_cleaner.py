@@ -6,6 +6,8 @@ from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 import nltk
 import json
+from transformers import BertTokenizer
+import torch
 # punkt: for tokenization, essentially spliting a text into individual words
 # stopwords: for removing common words
 
@@ -70,28 +72,16 @@ def clean_and_save_classification_data():
     print(f"Test negative: {len(result['test']['neg'])} reviews")
 
 def clean_and_save_generation_data():
-    """Clean generation data and save to pickle file"""
-
+    """Clean generation data and save to CSV"""
     csv: pd.DataFrame = pd.read_csv("./data/stage_4_data/text_generation/data.csv")
-
-    ids = csv["ID"]
-    joke = csv["Joke"]
-
+    
     cleaned_data = {
         'ID': csv['ID'],
         'Joke': [clean_generation_text(joke) for joke in csv['Joke']]
     }
 
     cleaned_data = pd.DataFrame(cleaned_data)
-
     cleaned_data.to_csv("./data/stage_4_data/cleaned_generation.csv", index=False)
-
-
-    # with open('./data/stage_4_data/cleaned_generation.txt', 'w', encoding='utf-8') as f:
-    #     f.write(cleaned_text)
-
-    # print("\nGeneration data cleaned and saved:")
-    # print(f"Total characters: {len(cleaned_text)}")
-    # print(f"Unique characters: {len(set(cleaned_text))}")
-
-clean_and_save_generation_data()
+    
+    print("Generation data cleaned and saved!")
+    print(f"Total jokes cleaned: {len(cleaned_data)}")
