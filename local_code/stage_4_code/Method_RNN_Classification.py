@@ -21,9 +21,20 @@ class Method_RNN_Classification(method, nn.Module):
     max_epoch = 500
     # it defines the learning rate for gradient descent based optimizer for model learning
     learning_rate = 1e-3
-    
-    def __init__(self, mName, mDescription, vocab_size, embedding_dim=100, hidden_dim=128, 
-                 num_layers=2, max_epoch=500, learning_rate=1e-3):
+    # vocabulary related attributes
+    word_to_idx = {}
+    idx_to_word = {}
+    vocab_size = 0
+    # max sequence length to consider
+    max_seq_length = 150  # Reduced from 200 to save memory
+    # parameters for RNN model
+    embedding_dim = 64   # Reduced from 100 to save memory
+    hidden_dim = 64      # Reduced from 128 to save memory
+    num_layers = 2
+    bidirectional = True
+    dropout_rate = 0.3   # Increased slightly to help generalization
+
+    def __init__(self, mName, mDescription, max_epoch=500, learning_rate=1e-3):
         method.__init__(self, mName, mDescription)
         nn.Module.__init__(self)
         
