@@ -6,7 +6,7 @@ Concrete IO class for a specific dataset
 # License: TBD
 
 import os
-import pickle
+import json
 from local_code.base_class.dataset import dataset
 from typing import Literal
 
@@ -27,35 +27,35 @@ class Dataset_Loader(dataset):
     
     def _load_classification_data(self):
         print('Loading cleaned classification data...')
-        with open(os.path.join(self.dataset_source_folder_path, 'cleaned_reviews.pkl'), 'rb') as f:
-            reviews, labels = pickle.load(f)  # Data is saved as a tuple of (reviews, labels)
-        
-        # Split into train (first 80%) and test (last 20%)
-        split_idx = int(len(reviews) * 0.8)
-        
+        with open(os.path.join(self.dataset_source_folder_path, 'cleaned_classification.json'), 'r', encoding="utf-8") as f:
+            data = json.load(f)
+
+        training = data["train"]
+        testing = data["test"]
+
+        pos_train = training["pos"]
+        neg_train = training["neg"]
+
+        pos_test = testing["pos"]
+        neg_test = testing["neg"]
+
         result = {
-            "training_data": { 
-                "X": reviews[:split_idx],
-                "y": labels[:split_idx]
+            "training_data": {
+                "X": pos_train + neg_train,
+                "y": [1 for _ in pos_train] + [0 for _ in neg_train]
             },
-            "test_data": { 
-                "X": reviews[split_idx:],
-                "y": labels[split_idx:]
+            "test_data": {
+                "X": pos_test + neg_test,
+                "y": [1 for _ in pos_test] + [0 for _ in neg_test]
             }
         }
+
         self.data = result
         return result
     
     def _load_generation_data(self):
         print('Loading text generation data...')
-        with open(os.path.join(self.dataset_source_folder_path, 'text_generation', 'data'), 'r', encoding='utf-8') as f:
-            text_data = f.read()
-        
-        result = {
-            "training_data": {"X": text_data, "y": None},
-            "test_data": {"X": None, "y": None}
-        }
-        
+        # TODO: Implement text generation data loading later
         self.data = result
         return result
     

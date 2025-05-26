@@ -1,8 +1,7 @@
 # Required imports for file handling, text processing, and data serialization
 import os
-import pickle
+import pandas as pd
 import string
-import re
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 import nltk
@@ -19,6 +18,7 @@ nltk.download('stopwords')
 nltk.download('punkt_tab')
 
 nltk.download('tokenizers/punkt/english.pickle')
+
 def clean_text(text):
     """Clean text by removing punctuation, converting to lowercase, and removing stopwords"""
     # Remove punctuation
@@ -60,10 +60,6 @@ def clean_and_save_classification_data():
                     cleaned_text = clean_text(text)
                     result[split][sentiment].append(cleaned_text)
     
-    # Save cleaned data
-    with open('./data/stage_4_data/cleaned_classification.pkl', 'wb') as f:
-        pickle.dump(result, f)
-    
     with open('./data/stage_4_data/cleaned_classification.json', 'w', encoding='utf-8') as f:
         json.dump(result, f, ensure_ascii=False, indent=4)
 
@@ -75,18 +71,27 @@ def clean_and_save_classification_data():
 
 def clean_and_save_generation_data():
     """Clean generation data and save to pickle file"""
-    with open('./data/stage_4_data/text_generation/data', 'r', encoding='utf-8') as f:
-        text = f.read()
-    
-    cleaned_text = clean_generation_text(text)
-    
-    # Save cleaned data
-    with open('./data/stage_4_data/cleaned_generation.pkl', 'wb') as f:
-        pickle.dump(cleaned_text, f)
-    
-    print("\nGeneration data cleaned and saved:")
-    print(f"Total characters: {len(cleaned_text)}")
-    print(f"Unique characters: {len(set(cleaned_text))}")
 
-clean_and_save_classification_data()
+    csv: pd.DataFrame = pd.read_csv("./data/stage_4_data/text_generation/data.csv")
+
+    ids = csv["ID"]
+    joke = csv["Joke"]
+
+    cleaned_data = {
+        'ID': csv['ID'],
+        'Joke': [clean_generation_text(joke) for joke in csv['Joke']]
+    }
+
+    cleaned_data = pd.DataFrame(cleaned_data)
+
+    cleaned_data.to_csv("./data/stage_4_data/cleaned_generation.csv", index=False)
+
+
+    # with open('./data/stage_4_data/cleaned_generation.txt', 'w', encoding='utf-8') as f:
+    #     f.write(cleaned_text)
+
+    # print("\nGeneration data cleaned and saved:")
+    # print(f"Total characters: {len(cleaned_text)}")
+    # print(f"Unique characters: {len(set(cleaned_text))}")
+
 clean_and_save_generation_data()
