@@ -20,6 +20,13 @@ def show_menu(title: str, options: List[Tuple[str, str]]) -> str:
         except ValueError:
             print("\n❌ Please enter a valid number.")
 
+# Model type options
+model_type_options = [
+    ("classification", "Text Classification Model - Sentiment Analysis"),
+    ("generation", "Text Generation Model - Joke Generator")
+]
+
+# Classification metrics
 metric_options = [
     ("accuracy_score", "Standard accuracy - ratio of correct predictions"),
     ("f1_score", "Harmonic mean of precision and recall"),
@@ -28,10 +35,10 @@ metric_options = [
 ]
 
 epoch_options = [
-    ("20", "Quick training, good for testing"),
-    ("50", "Balanced training time"),
-    ("100", "Thorough training"),
-    ("200", "Extended training for complex problems")
+    ("15", "Quick training, good for testing"),
+    ("20", "Balanced training time"),
+    ("50", "Thorough training"),
+    ("100", "Extended training for complex problems")
 ]
 
 lr_options = [
@@ -41,15 +48,38 @@ lr_options = [
     ("0.0001", "Very careful learning - for sensitive problems")
 ]
 
+temperature_options = [
+    ("0.5", "Low temperature - more predictable"),
+    ("1.0", "Medium temperature - balanced"),
+    ("1.5", "High temperature - more creative")
+]
+
 def get_training_params() -> Dict[str, str]:
-    print("\n🔧 RNN Model Configuration")
-
+    # Select model type first
+    model_type = show_menu("🤖 Select Model Type", model_type_options)
+    
+    # Parameters common to both models
+    epochs = show_menu("🔄 Select Number of Epochs", epoch_options)
+    learning_rate = show_menu("📈 Select Learning Rate", lr_options)
+    
     params = {
-        'metric': show_menu("📊 Select Evaluation Metric", metric_options),
-        'epochs': show_menu("🔄 Select Number of Epochs", epoch_options),
-        'learning_rate': show_menu("📈 Select Learning Rate", lr_options),
+        'model_type': model_type,
+        'epochs': epochs,
+        'learning_rate': learning_rate
     }
-
+    
+    # Add classification-specific parameters
+    if model_type == "classification":
+        metric = show_menu("📊 Select Evaluation Metric", metric_options)
+        params['metric'] = metric
+    
+    # Add generation-specific parameters if model is generation
+    if model_type == "generation":
+        temperature = show_menu("🌡️ Select Generation Temperature", temperature_options)
+        params['temperature'] = temperature
+    
+    print("\n✨ Creating model with selected parameters...")
+    
     return params
 
 def print_training_status(message: str, is_complete: bool = False) -> None:
