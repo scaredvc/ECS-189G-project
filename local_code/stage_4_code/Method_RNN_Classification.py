@@ -14,7 +14,7 @@ import numpy as np
 import time
 from torch.nn.utils.rnn import pack_padded_sequence, pad_sequence, pad_packed_sequence
 
-class Method_RNN(method, nn.Module):
+class Method_RNN_Classification(method, nn.Module):
     data = None
     max_epoch = 500
     learning_rate = 1e-3
