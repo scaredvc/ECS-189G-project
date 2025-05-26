@@ -5,41 +5,84 @@ Concrete IO class for a specific dataset
 # Copyright (c) 2017-Current Jiawei Zhang <jiawei@ifmlab.org>
 # License: TBD
 
+import os
+import json
 from local_code.base_class.dataset import dataset
+from typing import Literal
 
 
 class Dataset_Loader(dataset):
     data = None
-    dataset_source_folder_path = None
-    dataset_source_file_name = None
-    
-    def __init__(self, dName=None, dDescription=None, training_data_file="", test_data_file=""):
+    dataset_source_folder_path = './data/stage_4_data/'
+
+    def __init__(self, dName=None, dDescription=None, data_type: Literal["classification", "generation"] = "classification"):
         super().__init__(dName, dDescription)
-        self.training_data_file = training_data_file
-        self.test_data_file = test_data_file
+        self.data_type = data_type
     
     def load(self):
-        print('loading data...')
+        if self.data_type == "classification":
+            return self._load_classification_data()
+        else:
+            return self._load_generation_data()
+    
+    def _load_classification_data(self):
+        print('Loading cleaned classification data...')
+        with open(os.path.join(self.dataset_source_folder_path, 'cleaned_classification.json'), 'r', encoding="utf-8") as f:
+            data = json.load(f)
+
+        training = data["train"]
+        testing = data["test"]
+
+        pos_train = training["pos"]
+        neg_train = training["neg"]
+
+        pos_test = testing["pos"]
+        neg_test = testing["neg"]
+
         result = {
             "training_data": {
-                "X": [],
-                "y": []
+                "X": pos_train + neg_train,
+                "y": [1 for _ in pos_train] + [0 for _ in neg_train]
             },
             "test_data": {
-                "X": [],
-                "y": []
+                "X": pos_test + neg_test,
+                "y": [1 for _ in pos_test] + [0 for _ in neg_test]
             }
         }
-        with open(self.dataset_source_folder_path + self.training_data_file, 'r') as f:
-            for line in f:
-                line = line.strip('\n')
-                elements = [int(i) for i in line.split(',')]
-                result["training_data"]["X"].append(elements[1:])
-                result["training_data"]["y"].append(elements[0])
-        with open(self.dataset_source_folder_path + self.test_data_file, 'r') as f:
-            for line in f:
-                line = line.strip('\n')
-                elements = [int(i) for i in line.split(',')]
-                result["test_data"]["X"].append(elements[1:])
-                result["test_data"]["y"].append(elements[0])
+
+        self.data = result
         return result
+    
+    def _load_generation_data(self):
+        print('Loading text generation data...')
+        # TODO: Implement text generation data loading later
+        self.data = result
+        return result
+    
+    # for testing purposes
+    def verify_data(self):
+        """Verify the loaded classification data"""
+        if self.data_type != "classification":
+            print("Data verification only available for classification data")
+            return
+        
+        train_data = self.data['training_data']
+        test_data = self.data['test_data']
+        
+        print("\nData Verification:")
+        print("=================")
+        print("Training Data:")
+        print(f"Total examples: {len(train_data['X'])}")
+        print(f"Total positive examples: {sum(1 for y in train_data['y'] if y == 1)}")
+        print(f"Total negative examples: {sum(1 for y in train_data['y'] if y == 0)}")
+        print("\nSample positive review:")
+        pos_idx = train_data['y'].index(1)
+        print(train_data['X'][pos_idx][:200], "...\n")
+        print("Sample negative review:")
+        neg_idx = train_data['y'].index(0)
+        print(train_data['X'][neg_idx][:200], "...")
+        
+        print("\nTest Data:")
+        print(f"Total examples: {len(test_data['X'])}")
+        print(f"Total positive examples: {sum(1 for y in test_data['y'] if y == 1)}")
+        print(f"Total negative examples: {sum(1 for y in test_data['y'] if y == 0)}")
