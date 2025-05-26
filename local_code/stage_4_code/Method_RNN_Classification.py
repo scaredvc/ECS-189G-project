@@ -6,7 +6,7 @@ Concrete MethodModule class for a specific learning MethodModule
 # License: TBD
 
 from local_code.base_class.method import method
-from local_code.stage_1_code.Evaluate_Accuracy import Evaluate_Accuracy
+from local_code.stage_4_code.Evaluate_Accuracy import Evaluate_Accuracy
 import torch
 from torch import nn
 import numpy as np
@@ -17,22 +17,17 @@ from torch.nn.utils.rnn import pack_padded_sequence, pad_sequence
 
 class Method_RNN_Classification(method, nn.Module):
     data = None
-    # it defines the max rounds to train the model
     max_epoch = 500
-    # it defines the learning rate for gradient descent based optimizer for model learning
     learning_rate = 1e-3
-    # vocabulary related attributes
     word_to_idx = {}
     idx_to_word = {}
     vocab_size = 0
-    # max sequence length to consider
-    max_seq_length = 150  # Reduced from 200 to save memory
-    # parameters for RNN model
-    embedding_dim = 64   # Reduced from 100 to save memory
-    hidden_dim = 64      # Reduced from 128 to save memory
+    max_seq_length = 200
+    embedding_dim = 100 
+    hidden_dim = 64
     num_layers = 2
     bidirectional = True
-    dropout_rate = 0.3   # Increased slightly to help generalization
+    dropout_rate = 0.2 
 
     def __init__(self, mName, mDescription, max_epoch=500, learning_rate=1e-3):
         method.__init__(self, mName, mDescription)
@@ -118,7 +113,7 @@ class Method_RNN_Classification(method, nn.Module):
         
         # Output layer
         output_dim = self.hidden_dim * 2 if self.bidirectional else self.hidden_dim
-        self.fc = nn.Linear(output_dim, 2)  # Binary classification
+        self.fc = nn.Linear(output_dim, 2)
         self.dropout = nn.Dropout(self.dropout_rate)
         
         # Move model to device
@@ -218,15 +213,59 @@ class Method_RNN_Classification(method, nn.Module):
                 torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm=1.0)
                 optimizer.step()
                 
-                # Calculate accuracy stats
+                # Calculate accuracy stats using batch predictions
                 batch_predicted = batch_pred.argmax(dim=1)
-                batch_correct = (batch_predicted == batch_y_tensor).sum().item()
-                epoch_correct += batch_correct
-                epoch_total += len(batch_indices)
             
-            # Calculate epoch metrics
+            # Collect all predictions and targets for accuracy evaluation
+            all_preds = []
+            all_targets = []
+            
+            # Set model to evaluation mode for accuracy assessment
+            self.eval()
+            
+            with torch.no_grad():
+                for start_idx in range(0, num_samples, batch_size):
+                    batch_indices = indices[start_idx:start_idx + batch_size]
+                    
+                    # Get batch data
+                    batch_X = [X_indices[i] for i in batch_indices]
+                    batch_lengths = [X_lengths[i] for i in batch_indices]
+                    batch_y = [y[i] for i in batch_indices]
+                    
+                    # Convert to tensors and pad sequences
+                    batch_X_tensor = [torch.LongTensor(x) for x in batch_X]
+                    batch_X_padded = pad_sequence(batch_X_tensor, batch_first=True, padding_value=0)
+                    batch_lengths_tensor = torch.LongTensor(batch_lengths)
+                    batch_y_tensor = torch.LongTensor(batch_y)
+                    
+                    # Move data to device - lengths must stay on CPU
+                    batch_X_padded = batch_X_padded.to(self.device)
+                    batch_y_tensor = batch_y_tensor.to(self.device)
+                    
+                    # Forward pass
+                    batch_pred = self.forward(batch_X_padded, batch_lengths_tensor)
+                    
+                    # Get predicted labels
+                    batch_predicted = batch_pred.argmax(dim=1).cpu()
+                    all_preds.append(batch_predicted)
+                    all_targets.append(batch_y_tensor.cpu())
+            
+            # Set model back to training mode
+            self.train(True)
+            
+            # Concatenate all predictions and targets
+            all_predictions = torch.cat(all_preds)
+            all_targets = torch.cat(all_targets)
+            
+            # Use Evaluate_Accuracy for evaluation
+            accuracy_evaluator.data = {
+                'true_y': all_targets,
+                'pred_y': all_predictions
+            }
+            accuracy = accuracy_evaluator.evaluate()
+            
+            # Calculate average loss
             avg_loss = epoch_loss / num_samples
-            accuracy = epoch_correct / epoch_total
             
             # Store metrics for plotting
             self.plotting_data['epoch'].append(epoch)

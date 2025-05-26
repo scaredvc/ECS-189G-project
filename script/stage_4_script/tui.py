@@ -28,10 +28,10 @@ metric_options = [
 ]
 
 epoch_options = [
-    ("100", "Quick training, good for testing"),
-    ("200", "Balanced training time"),
-    ("500", "Thorough training"),
-    ("1000", "Extended training for complex problems")
+    ("20", "Quick training, good for testing"),
+    ("50", "Balanced training time"),
+    ("100", "Thorough training"),
+    ("200", "Extended training for complex problems")
 ]
 
 lr_options = [
