@@ -24,7 +24,7 @@ class Method_RNN_Classification(method, nn.Module):
     vocab_size = 0
     max_seq_length = 200
     embedding_dim = 100 
-    hidden_dim = 64
+    hidden_dim = 100
     num_layers = 2
     bidirectional = True
     dropout_rate = 0.2 
@@ -57,17 +57,14 @@ class Method_RNN_Classification(method, nn.Module):
     def _build_vocab(self, texts, min_freq=2):
         """Build vocabulary from texts"""
         print('Building vocabulary...')
-        # Count word frequencies
         word_counts = Counter()
         for text in texts:
-            # Split by whitespace
             words = text.lower().split()
             word_counts.update(words)
-        
-        # Filter by minimum frequency
+
         filtered_words = [word for word, count in word_counts.items() if count >= min_freq]
         
-        # Create mappings
+
         self.word_to_idx = {'<PAD>': 0, '<UNK>': 1}
         for idx, word in enumerate(filtered_words, start=2):
             self.word_to_idx[word] = idx
@@ -85,11 +82,11 @@ class Method_RNN_Classification(method, nn.Module):
         
         for text in texts:
             words = text.lower().split()
-            # Truncate if longer than max_seq_length
+
             if len(words) > self.max_seq_length:
                 words = words[:self.max_seq_length]
             
-            # Convert to indices
+
             indices = [self.word_to_idx.get(word, self.word_to_idx['<UNK>']) for word in words]
             sequences.append(indices)
             sequence_lengths.append(len(indices))
@@ -160,10 +157,8 @@ class Method_RNN_Classification(method, nn.Module):
         loss_function = nn.CrossEntropyLoss()
         accuracy_evaluator = Evaluate_Accuracy('training evaluator', '')
         
-        # Define batch size
-        batch_size = 128  # Adjust this based on your GPU memory
+        batch_size = 64 
         
-        # Create dataset indices for batching
         num_samples = len(X_indices)
         indices = list(range(num_samples))
         
