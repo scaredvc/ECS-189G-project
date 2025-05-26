@@ -55,7 +55,36 @@ class Dataset_Loader(dataset):
     
     def _load_generation_data(self):
         print('Loading text generation data...')
-        # TODO: Implement text generation data loading later
+        import pandas as pd
+        import os
+        
+        # Load the jokes from CSV file
+        csv_path = os.path.join(self.dataset_source_folder_path, 'cleaned_generation.csv')
+        df = pd.read_csv(csv_path)
+        
+        # Extract jokes text, ignoring the ID column
+        jokes = df['Joke'].tolist()
+        
+        # For text generation, we don't need to split into train/test
+        # We'll use all data for training the generator
+        result = {
+            'jokes': jokes,
+            # We'll also create a list of jokes with their first five words as input
+            # and the rest as target for training the generator
+            'joke_inputs': [],
+            'joke_targets': []
+        }
+        
+        # Process each joke to create input/target pairs
+        for joke in jokes:
+            words = joke.lower().split()
+            if len(words) > 5:  # Only use jokes with more than 5 words
+                input_words = ' '.join(words[:5])
+                target_words = ' '.join(words[5:])
+                result['joke_inputs'].append(input_words)
+                result['joke_targets'].append(target_words)
+        
+        print(f"Loaded {len(jokes)} jokes, {len(result['joke_inputs'])} usable for training")
         self.data = result
         return result
     
