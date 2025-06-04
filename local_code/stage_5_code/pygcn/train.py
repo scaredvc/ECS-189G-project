@@ -8,8 +8,8 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 import torch.optim as optim
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 
-from pygcn.utils import accuracy
 from pygcn.models import GCN
 from local_code.stage_5_code.dataset_loader import Dataset_Loader
 
@@ -40,8 +40,8 @@ if args.cuda:
     torch.cuda.manual_seed(args.seed)
 
 # Load data
-dataset = Dataset_Loader(dName="cora", dDescription="stage 5")
-dataset.dataset_source_folder_path = "./data/stage_5_data/cora"
+dataset = Dataset_Loader(dName="citeseer", dDescription="stage 5")
+dataset.dataset_source_folder_path = "./data/stage_5_data/citeseer"
 features, labels, adj, idx_train, idx_val, idx_test = dataset.convert_to_pygcn_format(dataset.load())
 
 # Model and optimizer
@@ -68,7 +68,15 @@ def train(epoch):
     optimizer.zero_grad()
     output = model(features, adj)
     loss_train = F.nll_loss(output[idx_train], labels[idx_train])
-    acc_train = accuracy(output[idx_train], labels[idx_train])
+    
+    # Calculate metrics
+    preds_train = output[idx_train].max(1)[1].cpu().numpy()
+    labels_train = labels[idx_train].cpu().numpy()
+    acc_train = accuracy_score(labels_train, preds_train)
+    f1_train = f1_score(labels_train, preds_train, average='weighted')
+    precision_train = precision_score(labels_train, preds_train, average='weighted')
+    recall_train = recall_score(labels_train, preds_train, average='weighted')
+    
     loss_train.backward()
     optimizer.step()
 
@@ -78,13 +86,26 @@ def train(epoch):
         model.eval()
         output = model(features, adj)
 
+    # Calculate validation metrics
+    preds_val = output[idx_val].max(1)[1].cpu().numpy()
+    labels_val = labels[idx_val].cpu().numpy()
     loss_val = F.nll_loss(output[idx_val], labels[idx_val])
-    acc_val = accuracy(output[idx_val], labels[idx_val])
+    acc_val = accuracy_score(labels_val, preds_val)
+    f1_val = f1_score(labels_val, preds_val, average='weighted')
+    precision_val = precision_score(labels_val, preds_val, average='weighted')
+    recall_val = recall_score(labels_val, preds_val, average='weighted')
+    
     print('Epoch: {:04d}'.format(epoch+1),
           'loss_train: {:.4f}'.format(loss_train.item()),
-          'acc_train: {:.4f}'.format(acc_train.item()),
+          'acc_train: {:.4f}'.format(acc_train),
+          'f1_train: {:.4f}'.format(f1_train),
+          'prec_train: {:.4f}'.format(precision_train),
+          'rec_train: {:.4f}'.format(recall_train),
           'loss_val: {:.4f}'.format(loss_val.item()),
-          'acc_val: {:.4f}'.format(acc_val.item()),
+          'acc_val: {:.4f}'.format(acc_val),
+          'f1_val: {:.4f}'.format(f1_val),
+          'prec_val: {:.4f}'.format(precision_val),
+          'rec_val: {:.4f}'.format(recall_val),
           'time: {:.4f}s'.format(time.time() - t))
 
 
@@ -92,10 +113,21 @@ def test():
     model.eval()
     output = model(features, adj)
     loss_test = F.nll_loss(output[idx_test], labels[idx_test])
-    acc_test = accuracy(output[idx_test], labels[idx_test])
+    
+    # Calculate test metrics
+    preds_test = output[idx_test].max(1)[1].cpu().numpy()
+    labels_test = labels[idx_test].cpu().numpy()
+    acc_test = accuracy_score(labels_test, preds_test)
+    f1_test = f1_score(labels_test, preds_test, average='weighted')
+    precision_test = precision_score(labels_test, preds_test, average='weighted')
+    recall_test = recall_score(labels_test, preds_test, average='weighted')
+    
     print("Test set results:",
           "loss= {:.4f}".format(loss_test.item()),
-          "accuracy= {:.4f}".format(acc_test.item()))
+          "accuracy= {:.4f}".format(acc_test),
+          "f1_score= {:.4f}".format(f1_test),
+          "precision= {:.4f}".format(precision_test),
+          "recall= {:.4f}".format(recall_test))
 
 
 # Train model
