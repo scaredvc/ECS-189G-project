@@ -9,8 +9,9 @@ import torch
 import torch.nn.functional as F
 import torch.optim as optim
 
-from pygcn.utils import load_data, accuracy
+from pygcn.utils import accuracy
 from pygcn.models import GCN
+from local_code.stage_5_code.dataset_loader import Dataset_Loader
 
 # Training settings
 parser = argparse.ArgumentParser()
@@ -39,7 +40,9 @@ if args.cuda:
     torch.cuda.manual_seed(args.seed)
 
 # Load data
-adj, features, labels, idx_train, idx_val, idx_test = load_data()
+dataset = Dataset_Loader(dName="cora", dDescription="stage 5")
+dataset.dataset_source_folder_path = "./data/stage_5_data/cora"
+features, labels, adj, idx_train, idx_val, idx_test = dataset.convert_to_pygcn_format(dataset.load())
 
 # Model and optimizer
 model = GCN(nfeat=features.shape[1],
